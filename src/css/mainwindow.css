@@ -695,14 +695,14 @@ div.marker-holder {
 
 #timeline .marker {
   position: absolute;
-  background-color: #777 !important;
-  width: 8px;
+  background-color: #fff !important;
+  width: 3px;
   height: 20px !important;
   top: -5px;
   left: 0px;
   z-index: 999;
-  border-radius: 3px !important;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.4) !important;
+  border-radius: 2px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.6) !important;
   transition: left 0.3s;
 }
 

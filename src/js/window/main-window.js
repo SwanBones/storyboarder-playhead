@@ -3625,31 +3625,18 @@ const renderShotGeneratorPanel = () => {
   )
 }
 
-let renderMarkerPosition = () => {
+let renderMarkerPosition = (timeMs) => {
   // let shouldRenderThumbnailDrawer = false
   if (!shouldRenderThumbnailDrawer) return
 
-  let curr = boardData.boards[currentBoard]
   let last = boardData.boards[boardData.boards.length - 1]
-
-  let percentage
-  if (last.duration) {
-    percentage = (curr.time) / (last.time + last.duration)
-  } else {
-    percentage = (curr.time) / (last.time + boardData.defaultBoardTiming)
-  }
+  let totalTime = last.time + (last.duration || boardData.defaultBoardTiming)
+  let t = (timeMs !== undefined) ? timeMs : boardData.boards[currentBoard].time
 
   let width = document.querySelector('#timeline #movie-timeline-content').offsetWidth
-  document.querySelector('#timeline .marker').style.left = (width * percentage) + 'px'
+  document.querySelector('#timeline .marker').style.left = (width * (t / totalTime)) + 'px'
 
-  document.querySelector('#timeline .left-block').innerHTML = util.msToTime(curr.time)
-
-  let totalTime
-  if (last.duration) {
-    totalTime = (last.time + last.duration)
-  } else {
-    totalTime = (last.time + boardData.defaultBoardTiming)
-  }
+  document.querySelector('#timeline .left-block').innerHTML = util.msToTime(t)
   document.querySelector('#timeline .right-block').innerHTML = util.msToTime(totalTime)
 
   sceneTimelineView.update({
@@ -4396,15 +4383,48 @@ let renderTimeline = () => {
 
   document.querySelector('#timeline #movie-timeline-content').innerHTML = html.join('')
 
-  let boardNodes = document.querySelectorAll('#timeline #movie-timeline-content .t-scene')
-  for (var board of boardNodes) {
-    board.addEventListener('pointerdown', (e) => {
-      saveImageFile().then(() => {
-        currentBoard = Number(e.target.dataset.node)
-        gotoBoard(currentBoard)
-      })
-    }, true, true)
+  let timelineContent = document.querySelector('#timeline #movie-timeline-content')
+
+  let timeFromPointer = (e) => {
+    let rect = timelineContent.getBoundingClientRect()
+    let fraction = Math.max(0, Math.min(e.clientX - rect.left, rect.width)) / rect.width
+    let last = boardData.boards[boardData.boards.length - 1]
+    let totalMs = last.time + (last.duration || prefsModule.getPrefs().defaultBoardTiming)
+    return fraction * totalMs
   }
+
+  let boardIndexAtTime = (t) => {
+    let index = 0
+    for (let i = 0; i < boardData.boards.length; i++) {
+      if (boardData.boards[i].time <= t) index = i
+      else break
+    }
+    return index
+  }
+
+  timelineContent.addEventListener('pointerdown', (e) => {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    let t = timeFromPointer(e)
+    renderMarkerPosition(t)
+    saveImageFile().then(() => {
+      currentBoard = boardIndexAtTime(t)
+      gotoBoard(currentBoard)
+    })
+  })
+
+  timelineContent.addEventListener('pointermove', (e) => {
+    if (!e.buttons) return
+    let t = timeFromPointer(e)
+    renderMarkerPosition(t)
+  })
+
+  timelineContent.addEventListener('pointerup', (e) => {
+    let t = timeFromPointer(e)
+    saveImageFile().then(() => {
+      currentBoard = boardIndexAtTime(t)
+      gotoBoard(currentBoard)
+    })
+  })
 
   // HACK restore original position of marker
   if (getMarkerEl()) getMarkerEl().style.left = markerLeft
@@ -5022,6 +5042,9 @@ const startPlaying = () => {
   playbackStart = process.hrtime.bigint()
   playbackFrom = boardData.boards[currentBoard].time
 
+  let marker = document.querySelector('#timeline .marker')
+  if (marker) marker.style.transition = 'none'
+
   audioPlayback.start()
   audioPlayback.playBoard(currentBoard)
 
@@ -5036,6 +5059,9 @@ const stopPlaying = () => {
   if (!playbackMode) return
 
   playbackMode = false
+
+  let marker = document.querySelector('#timeline .marker')
+  if (marker) marker.style.transition = ''
 
   audioPlayback.stop()
 
@@ -5075,6 +5101,8 @@ const playbackAdvance = async () => {
     stopPlaying()
     return
   }
+
+  renderMarkerPosition(d)
 
   let boardNow
   for (let board of boardData.boards) {
