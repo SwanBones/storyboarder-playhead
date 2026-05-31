@@ -1392,7 +1392,7 @@ class SceneTimelineView {
     // position in the outer container's coordinate space: subtract scrollLeft to convert from content-space
     this.playheadEl.style.left = `${t * timelineView.pixelsPerMsec * timelineView.scale - scrollable.scrollLeft}px`;
     // keep line height flush with the scrollable so it doesn't bleed into content below the timeline
-    if (this._playheadLine) this._playheadLine.style.height = `${scrollable.offsetHeight}px`;
+    if (this._playheadLine) this._playheadLine.style.height = `${scrollable.offsetHeight - 12}px`;
   }
 }
 
