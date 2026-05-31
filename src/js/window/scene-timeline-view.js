@@ -1315,36 +1315,34 @@ class SceneTimelineView {
 
   updatePlayheadPosition(timeMs) {
     let timelineView = this.refs && this.refs.timelineView;
-    if (
-      !timelineView ||
-      !timelineView.refs ||
-      !timelineView.refs.timelineScrollable
-    )
-      return;
+    if (!timelineView || !timelineView.refs || !timelineView.refs.timelineScrollable) return;
 
-    let container = timelineView.refs.timelineScrollable.firstElementChild;
-    if (!container) return;
+    let scrollable = timelineView.refs.timelineScrollable;
+    let outerContainer = scrollable.parentElement;
+    if (!outerContainer) return;
+
+    if (timeMs !== undefined) this._playheadTimeMs = timeMs;
+    let t = this._playheadTimeMs || 0;
 
     if (!this.playheadEl) {
-      // wrapper — zero width, positioned at the time offset
+      // wrapper — zero width/height, positioned in the outer container so it can hover above the scroll area
       this.playheadEl = document.createElement("div");
       this.playheadEl.style.cssText =
         "position:absolute;top:0;left:0;width:0;height:0;pointer-events:none;z-index:10;";
 
-      // vertical hairline below the handle
+      // hairline extending down through the timeline content
       let line = document.createElement("div");
       line.style.cssText =
-        "position:absolute;top:16px;left:-1px;width:2px;height:200px;background-color:#555;";
+        "position:absolute;top:8px;left:-1px;width:2px;height:500px;background-color:#555;";
       this.playheadEl.appendChild(line);
 
-      // vertical pill drag handle at the top — slightly lighter than the line, interactive
-      const HANDLE_COLOR = "#fff";
+      // pill handle centered at the top edge — sticks up above the timeline
+      const HANDLE_COLOR = "#888";
       const HANDLE_HOVER_COLOR = "#bbb";
       let handle = document.createElement("div");
-      handle.style.cssText = `position:absolute;top:0;left:-4px;width:8px;height:16px;border-radius:4px;background-color:${HANDLE_COLOR};cursor:ew-resize;pointer-events:all;`;
-      handle.addEventListener("mouseenter", () => {
-        handle.style.backgroundColor = HANDLE_HOVER_COLOR;
-      });
+      handle.style.cssText = `position:absolute;top:-8px;left:-4px;width:8px;height:16px;border-radius:4px;background-color:${HANDLE_COLOR};cursor:ew-resize;pointer-events:all;`;
+      handle.addEventListener("mouseenter", () => { handle.style.backgroundColor = HANDLE_HOVER_COLOR; });
+      handle.addEventListener("mouseleave", () => { if (!isDragging) handle.style.backgroundColor = HANDLE_COLOR; });
       this.playheadEl.appendChild(handle);
 
       let isDragging = false;
@@ -1359,11 +1357,12 @@ class SceneTimelineView {
       handle.addEventListener("pointermove", (e) => {
         if (!isDragging) return;
         let tv = this.refs.timelineView;
-        let scrollable = tv.refs.timelineScrollable;
-        let rect = scrollable.getBoundingClientRect();
-        let x = Math.max(0, e.clientX - rect.left + scrollable.scrollLeft);
-        // move the wrapper directly — no etch re-render needed
-        this.playheadEl.style.left = `${x}px`;
+        let sc = tv.refs.timelineScrollable;
+        let rect = sc.getBoundingClientRect();
+        // content-space x, then convert back to screen-space for the outer container
+        let contentX = Math.max(0, e.clientX - rect.left + sc.scrollLeft);
+        this._playheadTimeMs = contentX / (tv.pixelsPerMsec * tv.scale);
+        this.playheadEl.style.left = `${contentX - sc.scrollLeft}px`;
         e.stopPropagation();
       });
 
@@ -1372,24 +1371,26 @@ class SceneTimelineView {
         isDragging = false;
         handle.style.backgroundColor = HANDLE_COLOR;
         let tv = this.refs.timelineView;
-        let scrollable = tv.refs.timelineScrollable;
-        let rect = scrollable.getBoundingClientRect();
-        let x = Math.max(0, e.clientX - rect.left + scrollable.scrollLeft);
-        let t = x / (tv.pixelsPerMsec * tv.scale);
-        if (this.onSeekToTime) this.onSeekToTime(t);
+        let sc = tv.refs.timelineScrollable;
+        let rect = sc.getBoundingClientRect();
+        let contentX = Math.max(0, e.clientX - rect.left + sc.scrollLeft);
+        let seekTime = contentX / (tv.pixelsPerMsec * tv.scale);
+        if (this.onSeekToTime) this.onSeekToTime(seekTime);
         e.stopPropagation();
       });
 
-      handle.addEventListener("mouseleave", () => {
-        if (!isDragging) handle.style.backgroundColor = HANDLE_COLOR;
+      // keep position correct when the user scrolls the timeline
+      scrollable.addEventListener("scroll", () => {
+        let tv = this.refs.timelineView;
+        let sc = tv.refs.timelineScrollable;
+        this.playheadEl.style.left = `${(this._playheadTimeMs || 0) * tv.pixelsPerMsec * tv.scale - sc.scrollLeft}px`;
       });
     }
 
-    if (!container.contains(this.playheadEl)) {
-      container.appendChild(this.playheadEl);
-    }
+    if (!outerContainer.contains(this.playheadEl)) outerContainer.appendChild(this.playheadEl);
 
-    this.playheadEl.style.left = `${timeMs * timelineView.pixelsPerMsec * timelineView.scale}px`;
+    // position in the outer container's coordinate space: subtract scrollLeft to convert from content-space
+    this.playheadEl.style.left = `${t * timelineView.pixelsPerMsec * timelineView.scale - scrollable.scrollLeft}px`;
   }
 }
 

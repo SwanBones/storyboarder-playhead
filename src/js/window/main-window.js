@@ -2166,13 +2166,13 @@ const renderScene = async () => {
 
       onSeekToTime: (timeMs) => {
         renderMarkerPosition(timeMs)
+        audioPlayback.setBypassed(true)
         saveImageFile().then(() => {
           currentBoard = boardIndexAtTime(timeMs)
-          audioPlayback.setBypassed(true)
-          gotoBoard(currentBoard, false, true).then(() => {
-            audioPlayback.setBypassed(false)
-            renderMarkerPosition(timeMs)
-          })
+          return gotoBoard(currentBoard, false, true)
+        }).then(() => {
+          audioPlayback.setBypassed(false)
+          renderMarkerPosition(timeMs)
         })
       },
 
@@ -4427,13 +4427,13 @@ let renderTimeline = () => {
   timelineContent.addEventListener('pointerup', (e) => {
     let t = timeFromPointer(e)
     renderMarkerPosition(t)
+    audioPlayback.setBypassed(true)
     saveImageFile().then(() => {
       currentBoard = boardIndexAtTime(t)
-      audioPlayback.setBypassed(true)
-      gotoBoard(currentBoard, false, true).then(() => {
-        audioPlayback.setBypassed(false)
-        renderMarkerPosition(t)
-      })
+      return gotoBoard(currentBoard, false, true)
+    }).then(() => {
+      audioPlayback.setBypassed(false)
+      renderMarkerPosition(t)
     })
   })
 
