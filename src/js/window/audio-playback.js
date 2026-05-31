@@ -146,7 +146,7 @@ class AudioPlayback {
     return Tone.Buffer.supportsType(url)
   }
 
-  playBoard (index) {
+  playBoard (index, fromTimeMs) {
     if (this.isBypassed) return
 
     // is the user auditioning audio by moving from board to board?
@@ -163,6 +163,9 @@ class AudioPlayback {
     // const CUT_EARLY_IN_SECONDS = 0.5
 
     let playingBoard = this.sceneData.boards[index]
+    // when seeking mid-scene, fromTimeMs is the exact project time to resume from;
+    // default to the board's start time (normal board-crossing during playback)
+    let playFromMs = (fromTimeMs !== undefined) ? fromTimeMs : playingBoard.time
 
     for (let i = 0; i < this.sceneData.boards.length; i++) {
       let board = this.sceneData.boards[i]
@@ -194,18 +197,18 @@ class AudioPlayback {
           player.start(
             // start now
             Tone.Time(),
-            // no offset
-            0
+            // offset within this board's audio
+            Math.max(0, playFromMs - playingBoard.time) / MSECS_IN_A_SECOND
             // duration, cut early
             // durationInSeconds
           )
 
-        // does this board end AFTER this current playing board starts?
+        // does this board end AFTER the resume point?
         } else if (
-          // it started before
-          board.time < playingBoard.time &&
+          // it started before the resume point
+          board.time < playFromMs &&
           // ... but it ends after
-          ((board.time + (player.buffer.duration * MSECS_IN_A_SECOND)) > playingBoard.time) &&
+          ((board.time + (player.buffer.duration * MSECS_IN_A_SECOND)) > playFromMs) &&
           // ... and we're NOT in auditioning mode
           //   (i.e.: we don't want to play overlapping audio from prior boards
           //    when we're auditioning a single board)
@@ -213,7 +216,7 @@ class AudioPlayback {
         ) {
           // console.log('\tfound overlapping board, i')
           if (board.audio) {
-            let offsetInMsecs = playingBoard.time - board.time
+            let offsetInMsecs = playFromMs - board.time
             // console.log('\tplaying overlapping', board.audio.filename, 'at offset', offsetInMsecs)
             let player = this.players.get(board.audio.filename)
             if (player.state !== 'started') {

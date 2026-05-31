@@ -358,6 +358,16 @@ const cacheKey = filepath => {
 
 let srcByUid = {} // TODO review, was used for setThumbnailDisplayAsPending, do we still need it?
 let shouldRenderThumbnailDrawer = true
+let currentPlayheadTimeMs = 0
+
+let boardIndexAtTime = (t) => {
+  let index = 0
+  for (let i = 0; i < boardData.boards.length; i++) {
+    if (boardData.boards[i].time <= t) index = i
+    else break
+  }
+  return index
+}
 
 //  analytics.event('Application', 'open', filename)
 
@@ -2154,6 +2164,13 @@ const renderScene = async () => {
         }
       },
 
+      onSeekToTime: (timeMs) => {
+        saveImageFile().then(() => {
+          currentBoard = boardIndexAtTime(timeMs)
+          gotoBoard(currentBoard).then(() => renderMarkerPosition(timeMs))
+        })
+      },
+
       onMoveSelectedBoards: (_selections, _position) => {
         selections = _selections
         let didChange = moveSelectedBoards(_position)
@@ -3548,6 +3565,7 @@ let gotoBoard = (boardNumber, shouldPreserveSelections = false) => {
     }
 
     renderMetaData()
+    if (!playbackMode) currentPlayheadTimeMs = boardData.boards[currentBoard].time
     renderMarkerPosition()
 
     let board = boardData.boards[currentBoard]
@@ -3626,22 +3644,20 @@ const renderShotGeneratorPanel = () => {
 }
 
 let renderMarkerPosition = (timeMs) => {
-  // let shouldRenderThumbnailDrawer = false
-  if (!shouldRenderThumbnailDrawer) return
-
   let last = boardData.boards[boardData.boards.length - 1]
   let totalTime = last.time + (last.duration || boardData.defaultBoardTiming)
-  let t = (timeMs !== undefined) ? timeMs : boardData.boards[currentBoard].time
 
-  let width = document.querySelector('#timeline #movie-timeline-content').offsetWidth
-  document.querySelector('#timeline .marker').style.left = (width * (t / totalTime)) + 'px'
+  if (timeMs !== undefined) currentPlayheadTimeMs = timeMs
+  let t = currentPlayheadTimeMs
 
-  document.querySelector('#timeline .left-block').innerHTML = util.msToTime(t)
-  document.querySelector('#timeline .right-block').innerHTML = util.msToTime(totalTime)
+  if (shouldRenderThumbnailDrawer) {
+    let width = document.querySelector('#timeline #movie-timeline-content').offsetWidth
+    document.querySelector('#timeline .marker').style.left = (width * (t / totalTime)) + 'px'
+    document.querySelector('#timeline .left-block').innerHTML = util.msToTime(t)
+    document.querySelector('#timeline .right-block').innerHTML = util.msToTime(totalTime)
+  }
 
-  sceneTimelineView.update({
-    currentBoardIndex: currentBoard
-  })
+  if (sceneTimelineView) sceneTimelineView.updatePlayheadPosition(t)
 }
 
 const renderShotMetadata = () => {
@@ -4393,15 +4409,6 @@ let renderTimeline = () => {
     return fraction * totalMs
   }
 
-  let boardIndexAtTime = (t) => {
-    let index = 0
-    for (let i = 0; i < boardData.boards.length; i++) {
-      if (boardData.boards[i].time <= t) index = i
-      else break
-    }
-    return index
-  }
-
   timelineContent.addEventListener('pointerdown', (e) => {
     e.currentTarget.setPointerCapture(e.pointerId)
     let t = timeFromPointer(e)
@@ -4422,7 +4429,7 @@ let renderTimeline = () => {
     let t = timeFromPointer(e)
     saveImageFile().then(() => {
       currentBoard = boardIndexAtTime(t)
-      gotoBoard(currentBoard)
+      gotoBoard(currentBoard).then(() => renderMarkerPosition(t))
     })
   })
 
@@ -5040,13 +5047,13 @@ let utter = new SpeechSynthesisUtterance()
 const startPlaying = () => {
   playbackMode = true
   playbackStart = process.hrtime.bigint()
-  playbackFrom = boardData.boards[currentBoard].time
+  playbackFrom = currentPlayheadTimeMs
 
   let marker = document.querySelector('#timeline .marker')
   if (marker) marker.style.transition = 'none'
 
   audioPlayback.start()
-  audioPlayback.playBoard(currentBoard)
+  audioPlayback.playBoard(currentBoard, currentPlayheadTimeMs)
 
   playbackAdvance()
 
