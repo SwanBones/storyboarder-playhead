@@ -15,7 +15,7 @@
     "start:electron": "cross-env NODE_ENV=development electron .",
     "start": "npm-run-all --parallel start:*",
     "dist:mac": "npm run build && electron-builder build -m --arm64 --x64",
-    "dist:win": "npm run build && electron-builder build -w",
+    "dist:win": "npm run build && npx electron-builder build -w",
     "dist:linux": "npm run build && electron-builder build -l",
     "dist": "npm run build && build -mwl",
     "test": "mocha $(find test -name '*[!renderer].test.js') && electron-mocha --renderer test/*.renderer.test.js test/**/*.renderer.test.js && electron-mocha test/**/*.main.test.js",
@@ -78,10 +78,7 @@
       "gatekeeperAssess": false
     },
     "win": {
-      "icon": "build/icon.ico",
-      "timeStampServer": "http://timestamp.comodoca.com/authenticode",
-      "certificateSubjectName": "Wonder Unit, Inc.",
-      "publisherName": "Wonder Unit, Inc."
+      "icon": "build/icon.ico"
     },
     "dmg": {
       "sign": false,
@@ -163,6 +160,7 @@
     "dotenv": "8.2.0",
     "dotenv-webpack": "^3.0.0",
     "electron": "18.0.2",
+    "electron-builder": "^24.13.3",
     "electron-devtools-installer": "3.1.1",
     "electron-mocha": "^11.0.2",
     "electron-notarize": "^1.1.1",

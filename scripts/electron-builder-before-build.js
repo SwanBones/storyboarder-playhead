@@ -6,10 +6,8 @@ exports.default = async function beforeBuild (context) {
 
   let pathToNodeModules = path.join(__dirname, '..', 'node_modules')
 
-  if (fs.existsSync(pathToNodeModules)) {
-    console.log(`      • removing node_modules to force ffmpeg-static to re-install for correct architecture`)
-    fs.rmSync(pathToNodeModules, { recursive: true })
-  }
+  // node_modules deletion skipped: only needed for cross-compilation (e.g. Mac→Win via Docker)
+  // Native Windows builds already have the correct ffmpeg-static binary
 
   return true
 }
