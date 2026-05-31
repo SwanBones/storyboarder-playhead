@@ -41,7 +41,7 @@ const defaultPrefs = {
     skipBlankBoards: true
   },
 
-  enableBoardAudition: true,
+  enableBoardAudition: false,
   enableHighQualityDrawingEngine: true,
 
   straightLineDelayInMsecs: 650,

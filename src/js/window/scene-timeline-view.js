@@ -1330,11 +1330,11 @@ class SceneTimelineView {
       this.playheadEl.style.cssText =
         "position:absolute;top:0;left:0;width:0;height:0;pointer-events:none;z-index:10;";
 
-      // hairline extending down through the timeline content
-      let line = document.createElement("div");
-      line.style.cssText =
-        "position:absolute;top:8px;left:-1px;width:2px;height:500px;background-color:#555;";
-      this.playheadEl.appendChild(line);
+      // hairline extending down through the timeline content — height kept in sync with the scrollable
+      this._playheadLine = document.createElement("div");
+      this._playheadLine.style.cssText =
+        "position:absolute;top:8px;left:-1px;width:2px;height:0;background-color:#555;";
+      this.playheadEl.appendChild(this._playheadLine);
 
       // pill handle centered at the top edge — sticks up above the timeline
       const HANDLE_COLOR = "#888";
@@ -1391,6 +1391,8 @@ class SceneTimelineView {
 
     // position in the outer container's coordinate space: subtract scrollLeft to convert from content-space
     this.playheadEl.style.left = `${t * timelineView.pixelsPerMsec * timelineView.scale - scrollable.scrollLeft}px`;
+    // keep line height flush with the scrollable so it doesn't bleed into content below the timeline
+    if (this._playheadLine) this._playheadLine.style.height = `${scrollable.offsetHeight}px`;
   }
 }
 
