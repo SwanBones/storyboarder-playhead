@@ -2,7 +2,6 @@
 logs
 *.log
 npm-debug.log*
-
 # Runtime data
 pids
 *.pid
@@ -50,3 +49,5 @@ src/build
 
 .env
 *.env
+
+CLAUDE.md

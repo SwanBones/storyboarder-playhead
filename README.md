@@ -1,6 +1,10 @@
 # Hi!
 
-I added a playhead to Storyboarder. A big note should be that these changes were vibe coded. I simply needed a playhead to continue making my videos without frustration. I would have loved to spend time on this project but i simply do not have the time to do so. So use this at your own risk. It should be safe though ;)
+I added a playhead to Storyboarder. Please take into account that these changes were vibe coded. I simply needed a playhead to continue making my videos without frustration. I would have loved to spend time on this project but i simply do not have the time to do so. So use this at your own risk. It should be safe though ;)
+
+Note, i could run the dev version using node 16.16.0
+
+Below is the copy paste of the official README.
 
 # Storyboarder
 
