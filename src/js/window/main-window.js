@@ -2165,9 +2165,14 @@ const renderScene = async () => {
       },
 
       onSeekToTime: (timeMs) => {
+        renderMarkerPosition(timeMs)
         saveImageFile().then(() => {
           currentBoard = boardIndexAtTime(timeMs)
-          gotoBoard(currentBoard).then(() => renderMarkerPosition(timeMs))
+          audioPlayback.setBypassed(true)
+          gotoBoard(currentBoard, false, true).then(() => {
+            audioPlayback.setBypassed(false)
+            renderMarkerPosition(timeMs)
+          })
         })
       },
 
@@ -3484,7 +3489,7 @@ let goNextBoard = async (direction, shouldPreserveSelections = false) => {
   }
 }
 
-let gotoBoard = (boardNumber, shouldPreserveSelections = false) => {
+let gotoBoard = (boardNumber, shouldPreserveSelections = false, preservePlayheadTime = false) => {
   if(isRecording && isRecordingStarted) {
     // make sure we capture the last frame
     // grab full-size image from current sketchpane (in memory)
@@ -3565,7 +3570,7 @@ let gotoBoard = (boardNumber, shouldPreserveSelections = false) => {
     }
 
     renderMetaData()
-    if (!playbackMode) currentPlayheadTimeMs = boardData.boards[currentBoard].time
+    if (!playbackMode && !preservePlayheadTime) currentPlayheadTimeMs = boardData.boards[currentBoard].time
     renderMarkerPosition()
 
     let board = boardData.boards[currentBoard]
@@ -4411,25 +4416,24 @@ let renderTimeline = () => {
 
   timelineContent.addEventListener('pointerdown', (e) => {
     e.currentTarget.setPointerCapture(e.pointerId)
-    let t = timeFromPointer(e)
-    renderMarkerPosition(t)
-    saveImageFile().then(() => {
-      currentBoard = boardIndexAtTime(t)
-      gotoBoard(currentBoard)
-    })
+    renderMarkerPosition(timeFromPointer(e))
   })
 
   timelineContent.addEventListener('pointermove', (e) => {
     if (!e.buttons) return
-    let t = timeFromPointer(e)
-    renderMarkerPosition(t)
+    renderMarkerPosition(timeFromPointer(e))
   })
 
   timelineContent.addEventListener('pointerup', (e) => {
     let t = timeFromPointer(e)
+    renderMarkerPosition(t)
     saveImageFile().then(() => {
       currentBoard = boardIndexAtTime(t)
-      gotoBoard(currentBoard).then(() => renderMarkerPosition(t))
+      audioPlayback.setBypassed(true)
+      gotoBoard(currentBoard, false, true).then(() => {
+        audioPlayback.setBypassed(false)
+        renderMarkerPosition(t)
+      })
     })
   })
 

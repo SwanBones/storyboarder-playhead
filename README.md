@@ -1,3 +1,7 @@
+# Hi!
+
+I added a playhead to Storyboarder. A big note should be that these changes were vibe coded. I simply needed a playhead to continue making my videos without frustration. I would have loved to spend time on this project but i simply do not have the time to do so. So use this at your own risk. It should be safe though ;)
+
 # Storyboarder
 
 Storyboarder makes it easy to visualize a story as fast you can draw stick figures. Quickly draw to test if a story idea works. Create and show animatics to others. Express your story idea without making a movie.
@@ -26,28 +30,28 @@ Works with Pens on any tablet or Cintiq or even a Microsoft Surface. Also works 
 
 ## Features:
 
-* Simple, Smooth Drawing
-* Super Simple Interface
-* Printed Worksheets
-* Works with Wacom
-* Easy Organization
-* Draw Straight Lines
-* Works with Fountain
-* Open in Photoshop
-* Measure Line Mileage
-* Guides to Help Drawing
-* Reference Layer
-* Onion Skin
-* Track changes
-* Collaborate on Github
-* Export to various Formats
+- Simple, Smooth Drawing
+- Super Simple Interface
+- Printed Worksheets
+- Works with Wacom
+- Easy Organization
+- Draw Straight Lines
+- Works with Fountain
+- Open in Photoshop
+- Measure Line Mileage
+- Guides to Help Drawing
+- Reference Layer
+- Onion Skin
+- Track changes
+- Collaborate on Github
+- Export to various Formats
 
 ## We have 4 brush types which are all you need to draw fast:
 
-* **Light pencil** for roughing
-* **Pencil** for fast sketching
-* **Pen** for inking strong lines
-* **Brush** for filling in some shading
+- **Light pencil** for roughing
+- **Pencil** for fast sketching
+- **Pen** for inking strong lines
+- **Brush** for filling in some shading
 
 You can also specificy 3 brush sizes for each type.
 
@@ -67,28 +71,28 @@ Need a straight line? Hold shift while you're drawing and you got straight lines
 
 ## There are 5 guide overlays to toggle:
 
-*  Grid
-*  Center Marks
-*  Thirds
-*  Angles
-*  Onion skin (previous and next board in shot)
+- Grid
+- Center Marks
+- Thirds
+- Angles
+- Onion skin (previous and next board in shot)
 
 ## We got mad simple key commands:
 
-* Light Pencil: <kbd>1</kbd>
-* Pencil: <kbd>2</kbd>
-* Pen: <kbd>3</kbd>
-* Brush: <kbd>4</kbd>
-* Eraser: <kbd>5</kbd>
-* Clear: <kbd>Delete</kbd> or <kbd>Backspace</kbd>
-* Undo: <kbd>Cmd</kbd>+<kbd>z</kbd>
-* Redo: <kbd>Cmd</kbd>+<kbd>y</kbd>
-* Smaller Brush: <kbd>[</kbd>
-* Bigger Brush: <kbd>]</kbd>
-* Straight Lines: <kbd>Hold shift while drawing</kbd>
-* Move Contents: <kbd>Hold command</kbd>
-* Scale Contents: <kbd>Cmd</kbd>+<kbd>Option</kbd>
-* Color Pick: <kbd>Hold Option</kbd>
+- Light Pencil: <kbd>1</kbd>
+- Pencil: <kbd>2</kbd>
+- Pen: <kbd>3</kbd>
+- Brush: <kbd>4</kbd>
+- Eraser: <kbd>5</kbd>
+- Clear: <kbd>Delete</kbd> or <kbd>Backspace</kbd>
+- Undo: <kbd>Cmd</kbd>+<kbd>z</kbd>
+- Redo: <kbd>Cmd</kbd>+<kbd>y</kbd>
+- Smaller Brush: <kbd>[</kbd>
+- Bigger Brush: <kbd>]</kbd>
+- Straight Lines: <kbd>Hold shift while drawing</kbd>
+- Move Contents: <kbd>Hold command</kbd>
+- Scale Contents: <kbd>Cmd</kbd>+<kbd>Option</kbd>
+- Color Pick: <kbd>Hold Option</kbd>
 
 ## FAQ
 

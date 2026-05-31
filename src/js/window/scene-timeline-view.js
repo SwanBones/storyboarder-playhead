@@ -1334,19 +1334,24 @@ class SceneTimelineView {
       // vertical hairline below the handle
       let line = document.createElement("div");
       line.style.cssText =
-        "position:absolute;top:10px;left:-1px;width:2px;height:200px;background-color:#666;";
+        "position:absolute;top:16px;left:-1px;width:2px;height:200px;background-color:#555;";
       this.playheadEl.appendChild(line);
 
-      // circular drag handle at the top
+      // vertical pill drag handle at the top — slightly lighter than the line, interactive
+      const HANDLE_COLOR = "#fff";
+      const HANDLE_HOVER_COLOR = "#bbb";
       let handle = document.createElement("div");
-      handle.style.cssText =
-        "position:absolute;top:0;left:-6px;width:12px;height:12px;border-radius:50%;background-color:#666;cursor:ew-resize;pointer-events:all;";
+      handle.style.cssText = `position:absolute;top:0;left:-4px;width:8px;height:16px;border-radius:4px;background-color:${HANDLE_COLOR};cursor:ew-resize;pointer-events:all;`;
+      handle.addEventListener("mouseenter", () => {
+        handle.style.backgroundColor = HANDLE_HOVER_COLOR;
+      });
       this.playheadEl.appendChild(handle);
 
       let isDragging = false;
 
       handle.addEventListener("pointerdown", (e) => {
         isDragging = true;
+        handle.style.backgroundColor = HANDLE_HOVER_COLOR;
         handle.setPointerCapture(e.pointerId);
         e.stopPropagation();
       });
@@ -1365,6 +1370,7 @@ class SceneTimelineView {
       handle.addEventListener("pointerup", (e) => {
         if (!isDragging) return;
         isDragging = false;
+        handle.style.backgroundColor = HANDLE_COLOR;
         let tv = this.refs.timelineView;
         let scrollable = tv.refs.timelineScrollable;
         let rect = scrollable.getBoundingClientRect();
@@ -1372,6 +1378,10 @@ class SceneTimelineView {
         let t = x / (tv.pixelsPerMsec * tv.scale);
         if (this.onSeekToTime) this.onSeekToTime(t);
         e.stopPropagation();
+      });
+
+      handle.addEventListener("mouseleave", () => {
+        if (!isDragging) handle.style.backgroundColor = HANDLE_COLOR;
       });
     }
 

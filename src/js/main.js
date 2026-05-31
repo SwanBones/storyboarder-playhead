@@ -306,7 +306,7 @@ app.on('ready', async () => {
     } else {
       dialog.showMessageBox(null, {
         type: 'error',
-        message: err
+        message: err.message || String(err)
       })
     }
   })
