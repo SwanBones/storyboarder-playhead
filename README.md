@@ -4,10 +4,15 @@ I added a playhead to Storyboarder. Please take into account that these changes 
 
 Note, i could run the dev version using node 16.16.0.
 
+All implemented features:
+
+- Playhead
+- Splitting boards: press shift + D and it will split the clip at the playhead position.
+- Board stretching: before, you could stretch a board's duration by dragging its right border. Now, dragging its left border will also stretch its duration as well as the previous one, to modify duration without impacting the timing of downstream boards.
+
 <img width="738" height="379" alt="signal-2026-06-01-10-02-28-863" src="https://github.com/user-attachments/assets/6dbd0e03-92d2-434b-a0d3-532c8aa7fb90" />
 
 <img width="844" height="414" alt="signal-2026-06-01-10-01-32-411" src="https://github.com/user-attachments/assets/0fa45492-0779-4673-87ca-d7d589726df1" />
-
 
 Below is the copy paste of the official README.
 
