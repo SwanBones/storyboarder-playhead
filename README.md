@@ -2,7 +2,12 @@
 
 I added a playhead to Storyboarder. Please take into account that these changes were vibe coded. I simply needed a playhead to continue making my videos without frustration. I would have loved to spend time on this project but i simply do not have the time to do so. So use this at your own risk. It should be safe though ;)
 
-Note, i could run the dev version using node 16.16.0
+Note, i could run the dev version using node 16.16.0.
+
+<img width="738" height="379" alt="signal-2026-06-01-10-02-28-863" src="https://github.com/user-attachments/assets/6dbd0e03-92d2-434b-a0d3-532c8aa7fb90" />
+
+<img width="844" height="414" alt="signal-2026-06-01-10-01-32-411" src="https://github.com/user-attachments/assets/0fa45492-0779-4673-87ca-d7d589726df1" />
+
 
 Below is the copy paste of the official README.
 

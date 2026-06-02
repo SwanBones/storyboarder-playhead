@@ -6657,6 +6657,92 @@ let pasteBoards = async () => {
   }
 };
 
+const splitBoard = async () => {
+  if (textInputMode) return
+  if (isSavingImageFile) {
+    sfx.error()
+    return
+  }
+
+  const timeMs = currentPlayheadTimeMs
+  const boardIndex = boardIndexAtTime(timeMs)
+  const boardSrc = boardData.boards[boardIndex]
+  const originalDuration = boardModel.boardDuration(boardData, boardSrc)
+  const offsetIntoBoard = timeMs - boardSrc.time
+  const tolerance = 100
+
+  if (offsetIntoBoard < tolerance || offsetIntoBoard > originalDuration - tolerance) {
+    notifications.notify({ message: 'Playhead is at a board boundary. Move it inside a board to split.', timing: 5 })
+    return
+  }
+
+  storeUndoStateForScene(true)
+  await saveImageFile()
+
+  const insertAt = boardIndex + 1
+  const boardDst = migrateBoards([util.stringifyClone(boardSrc)], insertAt)[0]
+
+  boardSrc.duration = offsetIntoBoard
+  boardDst.duration = originalDuration - offsetIntoBoard
+  boardDst.audio = null
+
+  try {
+    let filePairs = boardSrc.layers
+      ? Object.keys(boardSrc.layers).map((name) => ({
+          from: boardSrc.layers[name].url,
+          to: boardDst.layers[name].url,
+        }))
+      : []
+
+    filePairs.push({
+      from: boardModel.boardFilenameForThumbnail(boardSrc),
+      to: boardModel.boardFilenameForThumbnail(boardDst),
+    })
+
+    filePairs.push({
+      from: boardModel.boardFilenameForPosterFrame(boardSrc),
+      to: boardModel.boardFilenameForPosterFrame(boardDst),
+    })
+
+    if (boardSrc.link) {
+      filePairs.push({
+        from: boardSrc.link,
+        to: boardModel.boardFilenameForLink(boardDst),
+      })
+    }
+
+    filePairs = filePairs.map((pair) => ({
+      from: path.join(boardPath, 'images', pair.from),
+      to: path.join(boardPath, 'images', pair.to),
+    }))
+
+    for (let { from } of filePairs) {
+      if (!fs.existsSync(from)) {
+        log.error('splitBoard: could not find', from)
+        throw new Error('Could not find ' + from)
+      }
+    }
+
+    for (let { from, to } of filePairs) {
+      fs.writeFileSync(to, fs.readFileSync(from))
+    }
+
+    boardData.boards.splice(insertAt, 0, boardDst)
+    markBoardFileDirty()
+    storeUndoStateForScene()
+
+    renderThumbnailDrawer()
+    renderMarkerPosition(timeMs)
+
+    sfx.down(-1, 2)
+    notifications.notify({ message: 'Board split.', timing: 5 })
+  } catch (err) {
+    log.error(err)
+    notifications.notify({ message: 'Error: Could not split board.', timing: 5 })
+    throw new Error(err)
+  }
+}
+
 // paste to current board
 const pasteAndReplace = async () => {
   if (textInputMode) return;
@@ -7702,6 +7788,12 @@ ipcRenderer.on("duplicateBoard", (event, args) => {
       .catch((err) => log.error(err));
   }
 });
+
+ipcRenderer.on("splitBoard", (event, args) => {
+  if (!textInputMode) {
+    splitBoard().catch((err) => log.error(err))
+  }
+})
 
 ipcRenderer.on("reorderBoardsLeft", (event, args) => {
   if (!textInputMode) {

@@ -1240,6 +1240,10 @@ menuBus.on('duplicateBoard', (e, arg)=> {
   mainWindow.webContents.send('duplicateBoard')
 })
 
+menuBus.on('splitBoard', (e, arg)=> {
+  mainWindow.webContents.send('splitBoard')
+})
+
 menuBus.on('reorderBoardsLeft', (e, arg)=> {
   mainWindow.webContents.send('reorderBoardsLeft')
 })

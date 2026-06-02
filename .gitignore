@@ -51,3 +51,4 @@ src/build
 *.env
 
 CLAUDE.md
+/.claude
