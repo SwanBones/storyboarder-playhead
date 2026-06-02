@@ -94,6 +94,7 @@
       "delete-boards": "Delete Board(s)",
       "delete-boards-go-forward": "Delete Board(s) - Go Forward",
       "duplicate-board": "Duplicate Board",
+      "split-board": "Split Board",
       "reorder-left": "Reorder Left",
       "reorder-right": "Reorder Right",
       "add-audio-file": "Add Audio File…",

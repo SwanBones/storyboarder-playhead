@@ -394,6 +394,13 @@ const createMenu = ({ store, send }) => {
         }
       },
       {
+        accelerator: keystrokeFor('menu:boards:split-board'),
+        label: i18n.t('menu.boards.split-board'),
+        click (item, focusedWindow, event) {
+          send('splitBoard')
+        }
+      },
+      {
         type: 'separator'
       },
       {
