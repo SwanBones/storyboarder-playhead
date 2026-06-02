@@ -531,16 +531,30 @@ class BoardView {
             ],
         kind === "audio"
           ? null
-          : $.div({
-              ref: "handle",
-              class: "board-item__handle",
-              style: `position: absolute;
-                      right: ${Math.round(padRight / 1.5)}px;
-                      width: ${padRight}px;
-                      height: ${viewHeight}px;
-                      box-sizing: border-box;
-                      ${this.enabled ? "cursor: ew-resize;" : ""}`,
-            }),
+          : [
+              $.div({
+                ref: "leftHandle",
+                class: "board-item__left-handle",
+                style: `position: absolute;
+                        left: 0;
+                        width: ${padRight}px;
+                        height: ${viewHeight}px;
+                        box-sizing: border-box;
+                        ${index !== 0 && this.enabled ? "cursor: ew-resize;" : ""}`,
+                pointerenter: this.onLeftHandlePointerEnter,
+                pointerleave: this.onLeftHandlePointerLeave,
+              }),
+              $.div({
+                ref: "handle",
+                class: "board-item__handle",
+                style: `position: absolute;
+                        right: ${Math.round(padRight / 1.5)}px;
+                        width: ${padRight}px;
+                        height: ${viewHeight}px;
+                        box-sizing: border-box;
+                        ${this.enabled ? "cursor: ew-resize;" : ""}`,
+              }),
+            ],
       ],
     );
   }
@@ -621,6 +635,16 @@ class BoardView {
     if (this.mini) return;
     this.onBoardPointerUp(event, this);
   }
+
+  onLeftHandlePointerEnter = (event) => {
+    if (this.mini) return;
+    this.onLeftHandleHover?.(this, true);
+  };
+
+  onLeftHandlePointerLeave = (event) => {
+    if (this.mini) return;
+    this.onLeftHandleHover?.(this, false);
+  };
 }
 BoardView.MINI_HEIGHT = 10;
 
@@ -694,6 +718,7 @@ class TimelineView {
     this.onBoardPointerDown = this.onBoardPointerDown.bind(this);
     this.onBoardPointerUp = this.onBoardPointerUp.bind(this);
     this.onCancelMove = this.onCancelMove.bind(this);
+    this.onLeftHandleHover = this.onLeftHandleHover.bind(this);
 
     this.onDocumentPointerMove = this.onDocumentPointerMove.bind(this);
 
@@ -714,6 +739,12 @@ class TimelineView {
       draggableOffsetInPx: 0,
 
       insertPointInMsecs: undefined,
+
+      resizableLeftBoardView: undefined,
+      resizableLeftBoardOriginalDuration: undefined,
+      resizableLeftPrevBoard: undefined,
+      resizableLeftPrevBoardOriginalDuration: undefined,
+      resizableLeftOffsetInPx: 0,
     };
 
     // perform custom initialization here...
@@ -759,6 +790,7 @@ class TimelineView {
         scene: this.scene,
         onBoardPointerDown: this.onBoardPointerDown,
         onBoardPointerUp: this.onBoardPointerUp,
+        onLeftHandleHover: this.onLeftHandleHover,
         active: this.currentBoardIndex === index,
         enabled: !this.state.draggableBoardView,
         dragging: !!(
@@ -976,6 +1008,18 @@ class TimelineView {
         boardView.board,
       );
       this.state.resizableOffsetInPx = 0;
+    } else if (event.target === boardView.refs.leftHandle) {
+      if (index === 0) return;
+      let prevBoard = this.scene.boards[index - 1];
+      this.state.resizableLeftBoardView = boardView;
+      this.state.resizableLeftBoardOriginalDuration = boardModel.boardDuration(
+        this.scene,
+        boardView.board,
+      );
+      this.state.resizableLeftPrevBoard = prevBoard;
+      this.state.resizableLeftPrevBoardOriginalDuration =
+        boardModel.boardDuration(this.scene, prevBoard);
+      this.state.resizableLeftOffsetInPx = 0;
     } else {
       this.state.draggableBoardView = boardView;
       this.state.draggableBoardOriginalTime = boardView.board.time;
@@ -1009,7 +1053,43 @@ class TimelineView {
       this.onModifyBoardDurationByIndex(index, newDuration);
     }
 
-    if (this.state.draggableBoardView || this.state.resizableBoardView) {
+    if (this.state.resizableLeftBoardView) {
+      this.state.resizableLeftOffsetInPx += event.movementX;
+
+      let minDuration = Math.round(1000 / this.scene.fps);
+      let totalDuration =
+        this.state.resizableLeftPrevBoardOriginalDuration +
+        this.state.resizableLeftBoardOriginalDuration;
+
+      let delta =
+        this.state.resizableLeftOffsetInPx / (this.pixelsPerMsec * this.scale);
+
+      let newPrevDuration =
+        Math.round(
+          Math.min(
+            totalDuration - minDuration,
+            Math.max(
+              minDuration,
+              this.state.resizableLeftPrevBoardOriginalDuration + delta,
+            ),
+          ) / 10,
+        ) * 10;
+      let newCurrentDuration = totalDuration - newPrevDuration;
+
+      let prevIndex = this.scene.boards.indexOf(
+        this.state.resizableLeftPrevBoard,
+      );
+      let currIndex = prevIndex + 1;
+
+      this.onModifyBoardDurationByIndex(prevIndex, newPrevDuration);
+      this.onModifyBoardDurationByIndex(currIndex, newCurrentDuration);
+    }
+
+    if (
+      this.state.draggableBoardView ||
+      this.state.resizableBoardView ||
+      this.state.resizableLeftBoardView
+    ) {
       // updates the caret
       await this.update({});
     }
@@ -1053,6 +1133,12 @@ class TimelineView {
 
     this.state.insertPointInMsecs = undefined;
 
+    this.state.resizableLeftBoardView = undefined;
+    this.state.resizableLeftBoardOriginalDuration = undefined;
+    this.state.resizableLeftPrevBoard = undefined;
+    this.state.resizableLeftPrevBoardOriginalDuration = undefined;
+    this.state.resizableLeftOffsetInPx = 0;
+
     if (selections != null && position != null) {
       // request update
       this.onMoveSelectedBoards(selections, position);
@@ -1068,6 +1154,30 @@ class TimelineView {
 
   async onCancelMove(event) {
     await this.completeDragOrResize();
+  }
+
+  onLeftHandleHover(boardView, isHovering) {
+    if (!boardView.refs.leftHandle) return;
+
+    let leftHandle = boardView.refs.leftHandle;
+    let boardEl = leftHandle.parentElement;
+    if (!boardEl) return;
+
+    if (isHovering) {
+      leftHandle.classList.add("is-left-hovered");
+      let prevBoard = boardEl.previousElementSibling;
+      if (prevBoard) {
+        let rightHandle = prevBoard.querySelector(".board-item__handle");
+        if (rightHandle) rightHandle.classList.add("is-right-hovered");
+      }
+    } else {
+      leftHandle.classList.remove("is-left-hovered");
+      let prevBoard = boardEl.previousElementSibling;
+      if (prevBoard) {
+        let rightHandle = prevBoard.querySelector(".board-item__handle");
+        if (rightHandle) rightHandle.classList.remove("is-right-hovered");
+      }
+    }
   }
 
   onWheel(event) {
@@ -1315,7 +1425,12 @@ class SceneTimelineView {
 
   updatePlayheadPosition(timeMs) {
     let timelineView = this.refs && this.refs.timelineView;
-    if (!timelineView || !timelineView.refs || !timelineView.refs.timelineScrollable) return;
+    if (
+      !timelineView ||
+      !timelineView.refs ||
+      !timelineView.refs.timelineScrollable
+    )
+      return;
 
     let scrollable = timelineView.refs.timelineScrollable;
     let outerContainer = scrollable.parentElement;
@@ -1341,8 +1456,12 @@ class SceneTimelineView {
       const HANDLE_HOVER_COLOR = "#bbb";
       let handle = document.createElement("div");
       handle.style.cssText = `position:absolute;top:-8px;left:-4px;width:8px;height:16px;border-radius:4px;background-color:${HANDLE_COLOR};cursor:ew-resize;pointer-events:all;`;
-      handle.addEventListener("mouseenter", () => { handle.style.backgroundColor = HANDLE_HOVER_COLOR; });
-      handle.addEventListener("mouseleave", () => { if (!isDragging) handle.style.backgroundColor = HANDLE_COLOR; });
+      handle.addEventListener("mouseenter", () => {
+        handle.style.backgroundColor = HANDLE_HOVER_COLOR;
+      });
+      handle.addEventListener("mouseleave", () => {
+        if (!isDragging) handle.style.backgroundColor = HANDLE_COLOR;
+      });
       this.playheadEl.appendChild(handle);
 
       let isDragging = false;
@@ -1387,12 +1506,14 @@ class SceneTimelineView {
       });
     }
 
-    if (!outerContainer.contains(this.playheadEl)) outerContainer.appendChild(this.playheadEl);
+    if (!outerContainer.contains(this.playheadEl))
+      outerContainer.appendChild(this.playheadEl);
 
     // position in the outer container's coordinate space: subtract scrollLeft to convert from content-space
     this.playheadEl.style.left = `${t * timelineView.pixelsPerMsec * timelineView.scale - scrollable.scrollLeft}px`;
     // keep line height flush with the scrollable so it doesn't bleed into content below the timeline
-    if (this._playheadLine) this._playheadLine.style.height = `${scrollable.offsetHeight - 12}px`;
+    if (this._playheadLine)
+      this._playheadLine.style.height = `${scrollable.offsetHeight - 12}px`;
   }
 }
 

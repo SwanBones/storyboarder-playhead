@@ -857,6 +857,15 @@ input[type=range]:focus::-webkit-slider-runnable-track {
   color: inherit;
   text-decoration: underline;
 }
+
+.board-item__left-handle {
+  z-index: 2;
+}
+
+.board-item__left-handle.is-left-hovered,
+.board-item__handle.is-right-hovered {
+  background: rgba(255, 255, 255, 0.5) !important;
+}
 .audiofile_container .audiofile_text .paren {
   position: relative;
   font-size: 88%;
